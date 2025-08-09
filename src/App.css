@@ -1,0 +1,100 @@
+/* Minimal global styles tailored for the chess app */
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: linear-gradient(to bottom right, #0a0e1a 0%, #0f1318 50%, #0a0b0f 100%);
+  color: #e8eaed;
+  min-height: 100vh;
+}
+
+/* Remove default paddings/margins from the boilerplate */
+#root { max-width: none; padding: 0; text-align: initial; }
+
+@keyframes checkPulse {
+  0% { box-shadow: inset 0 0 0 3px #e53935, 0 0 0 6px rgba(229,57,53,0.35); }
+  50% { box-shadow: inset 0 0 0 3px #e53935, 0 0 0 12px rgba(229,57,53,0.15); }
+  100% { box-shadow: inset 0 0 0 3px #e53935, 0 0 0 6px rgba(229,57,53,0.35); }
+}
+
+/* App layout */
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(320px, 560px) 1fr;
+  gap: 16px;
+}
+
+
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #2c2f33;
+  background: #131517;
+  border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.toolbar::-webkit-scrollbar { display: none; }
+.toolbar { scrollbar-width: none; }
+
+.btn {
+  background: linear-gradient(135deg, #00c853 0%, #2e7d32 100%);
+  color: #fff;
+  border: 1px solid #215e26;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.btn.secondary { background: linear-gradient(135deg, #2b2e31 0%, #3a3f44 100%); border-color: #3a3f44; }
+
+.boardCard {
+  border-radius: 16px;
+  background: linear-gradient(145deg, #1a1d21, #15181c);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+  overflow: hidden;
+  padding: 12px;
+}
+.boardWrap {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.status { 
+  margin-top: 12px; 
+  font-weight: 600;
+  text-align: center;
+  font-size: 14px;
+}
+
+.panel {
+  border-radius: 16px;
+  background: linear-gradient(145deg, #1a1d21, #15181c);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+  padding: 20px;
+}
+
+.moves { margin: 0; padding-left: 18px; columns: 1; }
+.moves li { 
+  margin: 4px 0;
+  font-family: ui-monospace, 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; max-width: 100%; padding: 8px; }
+  .title h2 { font-size: 20px; }
+  .boardCard { padding: 8px; }
+  .panel { padding: 16px; }
+  .moves { columns: 1; }
+}
