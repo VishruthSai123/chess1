@@ -2,20 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Chess, Move } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import './App.css'
-import { Button } from './components/ui/button'
-import { Loader2 } from 'lucide-react'
+
 import { StockfishEngine } from './engine/stockfish'
 
 type Color = 'white' | 'black'
 
 function App() {
   const [gameFen, setGameFen] = useState<string>(new Chess().fen())
-  const [playerColor, setPlayerColor] = useState<Color>('white')
+  const [playerColor] = useState<Color>('white')
   const [status, setStatus] = useState('')
-  const [mode, setMode] = useState<'human' | 'ai'>('ai')
   const [isThinking, setIsThinking] = useState(false)
-  const [movetimeMs, setMovetimeMs] = useState(500)
-  const [skill, setSkill] = useState(20)
   const [history, setHistory] = useState<Move[]>([])
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null)
   const [legalTargets, setLegalTargets] = useState<Set<string>>(new Set())
@@ -24,18 +20,15 @@ function App() {
 
 
   useEffect(() => {
-    if (mode === 'ai') {
-      engine.initialize().then(() => engine.setSkillLevel(skill)).catch(() => {})
-    }
+    engine.initialize().then(() => engine.setSkillLevel(20)).catch(() => {})
     return () => {}
-  }, [engine, mode, skill])
+  }, [engine])
 
   const makeAIMove = async () => {
-    if (mode !== 'ai') return
     setIsThinking(true)
     const fen = chessRef.current.fen()
     try {
-      const { move } = await engine.getBestMove(fen, { movetimeMs })
+      const { move } = await engine.getBestMove(fen, { movetimeMs: 500 })
       const from = move.slice(0, 2)
       const to = move.slice(2, 4)
       const promo = move[4]
@@ -54,7 +47,7 @@ function App() {
   const onSquareClick = ({ square }: { square: string }) => {
     const game = chessRef.current
     const turn = game.turn() === 'w' ? 'white' : 'black'
-    const blocked = mode === 'ai' ? (turn !== playerColor || isThinking) : false
+    const blocked = turn !== playerColor || isThinking
     if (blocked) {
       setSelectedSquare(null)
       setLegalTargets(new Set())
@@ -62,13 +55,12 @@ function App() {
     }
 
     if (selectedSquare == null) {
-      const piece = game.get(square)
+      const piece = game.get(square as any)
       if (!piece) return
       const pieceColor = piece.color === 'w' ? 'white' : 'black'
-      const allowedColor = mode === 'human' ? turn : playerColor
-      if (pieceColor !== allowedColor) return
+      if (pieceColor !== playerColor) return
       setSelectedSquare(square)
-      const legal = game.moves({ square, verbose: true }) as Move[]
+      const legal = game.moves({ square: square as any, verbose: true }) as Move[]
       setLegalTargets(new Set(legal.map((m) => m.to)))
       return
     }
@@ -81,23 +73,23 @@ function App() {
 
     const isLegal = legalTargets.has(square)
     if (!isLegal) {
-      const piece = game.get(square)
+      const piece = game.get(square as any)
       const pieceColor = piece ? (piece.color === 'w' ? 'white' : 'black') : null
       if (piece && pieceColor === playerColor) {
         setSelectedSquare(square)
-        const legal = game.moves({ square, verbose: true }) as Move[]
+        const legal = game.moves({ square: square as any, verbose: true }) as Move[]
         setLegalTargets(new Set(legal.map((m) => m.to)))
       }
       return
     }
 
     const isPromotion =
-      game.get(selectedSquare)?.type === 'p' &&
+      game.get(selectedSquare as any)?.type === 'p' &&
       ((playerColor === 'white' && square[1] === '8') || (playerColor === 'black' && square[1] === '1'))
     let promotion: 'q' | 'r' | 'b' | 'n' | undefined
     if (isPromotion) {
       promotion = (prompt('Promote to (q, r, b, n)?', 'q') as any) ?? 'q'
-      if (!['q', 'r', 'b', 'n'].includes(promotion)) promotion = 'q'
+      if (!['q', 'r', 'b', 'n'].includes(promotion as string)) promotion = 'q'
     }
 
     const move = game.move({ from: selectedSquare, to: square, promotion: promotion ?? 'q' })
@@ -108,7 +100,7 @@ function App() {
     setSelectedSquare(null)
     setLegalTargets(new Set())
 
-    if (mode === 'ai' && !game.isGameOver()) {
+    if (!game.isGameOver()) {
       void makeAIMove()
     }
   }
@@ -117,20 +109,15 @@ function App() {
     if (!targetSquare) return false
     const game = chessRef.current
     const turn = game.turn() === 'w' ? 'white' : 'black'
-    if (mode === 'ai' && (turn !== playerColor || isThinking)) return false
-    if (mode === 'human') {
-      const src = game.get(sourceSquare)
-      const srcColor = src ? (src.color === 'w' ? 'white' : 'black') : null
-      if (!src || srcColor !== turn) return false
-    }
+    if (turn !== playerColor || isThinking) return false
 
     const isPromotion =
-      game.get(sourceSquare)?.type === 'p' &&
+      game.get(sourceSquare as any)?.type === 'p' &&
       ((playerColor === 'white' && targetSquare[1] === '8') || (playerColor === 'black' && targetSquare[1] === '1'))
     let promotion: 'q' | 'r' | 'b' | 'n' | undefined
     if (isPromotion) {
       promotion = (prompt('Promote to (q, r, b, n)?', 'q') as any) ?? 'q'
-      if (!['q', 'r', 'b', 'n'].includes(promotion)) promotion = 'q'
+      if (!['q', 'r', 'b', 'n'].includes(promotion as string)) promotion = 'q'
     }
 
     const move = game.move({ from: sourceSquare, to: targetSquare, promotion: promotion ?? 'q' })
@@ -141,33 +128,20 @@ function App() {
     setSelectedSquare(null)
     setLegalTargets(new Set())
 
-    if (mode === 'ai' && !game.isGameOver()) {
+    if (!game.isGameOver()) {
       setTimeout(() => void makeAIMove(), 0)
     }
     return true
   }
 
-  const resetGame = () => {
-    chessRef.current = new Chess()
-    setGameFen(chessRef.current.fen())
-    setHistory([])
-    updateStatus()
-    const turn = chessRef.current.turn() === 'w' ? 'white' : 'black'
-    if (mode === 'ai' && turn !== playerColor) {
-      setTimeout(() => void makeAIMove(), 0)
-    }
-  }
 
-  const flip = () => {
-    setPlayerColor((c) => (c === 'white' ? 'black' : 'white'))
-  }
 
   useEffect(() => {
     const turn = chessRef.current.turn() === 'w' ? 'white' : 'black'
-    if (mode === 'ai' && turn !== playerColor && !chessRef.current.isGameOver()) {
+    if (turn !== playerColor && !chessRef.current.isGameOver()) {
       void makeAIMove()
     }
-  }, [playerColor, mode])
+  }, [playerColor])
 
   const updateStatus = () => {
     const game = chessRef.current
@@ -188,15 +162,7 @@ function App() {
     updateStatus()
   }, [])
 
-  const undo = () => {
-    const game = chessRef.current
-    if (game.history().length === 0) return
-    game.undo()
-    if (game.history().length > 0) game.undo()
-    setGameFen(game.fen())
-    setHistory(game.history({ verbose: true }))
-    updateStatus()
-  }
+
 
   const buildSquareStyles = (): Record<string, React.CSSProperties> => {
     const styles: Record<string, React.CSSProperties> = {}
